@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "aviation-tracker-v2"
+version = "1.0.0"
+description = "Курсовая работа по авиации на основе APIAdapter"
+authors = ["Oleg <oleg@example.com>"]
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.31.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-cov = "^5.0.0"
+flake8 = "^7.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

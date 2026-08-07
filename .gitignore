@@ -1,0 +1,17 @@
+# Окружение Poetry и виртуальные папки
+.venv/
+venv/
+ENV/
+
+# Кэш компиляции Python и тестов
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+
+# Временная база данных с самолетами
+data/
+
+# Системные файлы IDE
+.idea/
+.vscode/
