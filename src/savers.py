@@ -39,7 +39,20 @@ class JSONSaver(BaseSaver):
             print(f"Критическая ошибка записи файла базы данных: {e}")
 
     def add_aeroplane(self, aeroplane_dict: dict) -> None:
+        """Добавление информации о самолете в файл с проверкой на дубликаты."""
         data = self._read()
+
+        # Извлекаем позывной добавляемого самолета
+        new_callsign = aeroplane_dict.get("callsign")
+
+        # Проверяем, есть ли уже такой позывной в нашей базе данных
+        is_duplicate = any(plane.get("callsign") == new_callsign for plane in data)
+
+        if is_duplicate:
+            # Если нашелся дубликат, просто выходим из метода, ничего не дописывая
+            return
+
+        # Если самолет уникальный — добавляем его и сохраняем файл
         data.append(aeroplane_dict)
         self._write(data)
 

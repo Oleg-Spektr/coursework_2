@@ -63,14 +63,15 @@ class Aeroplane:
     def __lt__(self, other):
         if not isinstance(other, Aeroplane):
             return NotImplemented
-        if self._velocity == other._velocity:
-            return self._altitude < other._altitude
-        return self._velocity < other._velocity
+        if self._altitude == other._altitude:
+            # При равной высоте сравниваем по скорости
+            return self._velocity < other._velocity
+        return self._altitude < other._altitude
 
     def __eq__(self, other):
         if not isinstance(other, Aeroplane):
             return NotImplemented
-        return self._velocity == other._velocity and self._altitude == other._altitude
+        return self._altitude == other._altitude and self._velocity == other._velocity
 
     def __le__(self, other):
         return self < other or self == other
