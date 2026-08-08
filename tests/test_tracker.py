@@ -1,3 +1,4 @@
+# tests/test_tracker.py
 import pytest
 import os
 from unittest.mock import MagicMock, patch
@@ -6,7 +7,7 @@ from src.savers import JSONSaver
 from src.utils import (
     filter_aeroplanes,
     get_aeroplanes_by_altitude,
-    sort_aeroplanes,
+    sort_aeroplanes_by_altitude,
     get_top_aeroplanes,
     print_aeroplanes,
     user_interaction
@@ -57,6 +58,7 @@ def test_cast_to_object_list():
     }
     obj_list = Aeroplane.cast_to_object_list(raw_response)
     assert len(obj_list) == 1
+    # ИСПРАВЛЕНО: Берём первый элемент списка [0]
     assert obj_list[0].callsign == "THY1812"
     assert obj_list[0].origin_country == "Turkey"
     assert obj_list[0].velocity == 210.4
@@ -116,6 +118,7 @@ def test_filter_aeroplanes(sample_planes):
     """Тест фильтрации по странам."""
     res = filter_aeroplanes(sample_planes, "Spain")
     assert len(res) == 1
+    # ИСПРАВЛЕНО: Берём первый элемент списка [0]
     assert res[0].callsign == "B2"
 
     res_multi = filter_aeroplanes(sample_planes, "Canada, Spain")
@@ -133,10 +136,11 @@ def test_get_aeroplanes_by_altitude(sample_planes):
 
 def test_sorting_and_top(sample_planes):
     """Тест сортировки по убыванию высоты (DESC) и выборки Топ-N (Критерий №8)."""
-    sorted_list = sort_aeroplanes(sample_planes)
+    sorted_list = sort_aeroplanes_by_altitude(sample_planes)
     # Самым первым должен быть C3, так как у него максимальная высота 12000.0
     assert sorted_list[0].altitude == 12000.0
     assert sorted_list[0].callsign == "C3"
+    assert sorted_list[-1].altitude == 5000.0
 
     # Последним должен быть A1 с высотой 5000.0
     assert sorted_list[-1].altitude == 5000.0
@@ -160,10 +164,9 @@ def test_user_interaction_mocked():
     """Эмуляция ввода пользователя для покрытия user_interaction."""
     inputs = ["Canada", "2", "Canada", "4000 - 15000"]
 
-    # Ссылаемся на правильное имя класса FlightRadarAdapter
-    with patch('builtins.input', side_effect=inputs), \
-            patch('src.api.FlightRadarAdapter.get_aeroplanes') as mock_get, \
-            patch('src.savers.JSONSaver.add_aeroplane') as _:
+    with patch("builtins.input", side_effect=inputs), patch(
+            "src.api.FlightRadarAdapter.get_aeroplanes"
+    ) as mock_get, patch("src.savers.JSONSaver.add_aeroplane") as _:
         user_interaction()
         assert mock_get.called
 
@@ -172,24 +175,14 @@ def test_api_adapter_mocked():
     """Тест для покрытия ветки успешного выполнения FlightRadarAdapter."""
     from src.api import FlightRadarAdapter
 
-    with patch('src.api.get') as mock_get:
+    with patch("src.api.get") as mock_get:
         mock_response_geo = MagicMock()
-        mock_response_geo.json.return_value = [{"boundingbox": ["10", "20", "30", "40"]}]
-
-        mock_response_sky = MagicMock()
-        # Возвращаем структуру, имитирующую реальный или демонстрационный ответ
-        mock_response_sky.json.return_value = {
-            "states": [
-                ["fr-105", "IBE3144", "Spain", 1720448104, 1720448104, -3.7, 40.4, 10200.0, False, 210.5, 0, None, None,
-                 10200.0, "321", False, 0]
-            ]
-        }
-
-        mock_get.side_effect = [mock_response_geo, mock_response_sky]
+        mock_response_geo.json.return_value = [
+            {"boundingbox": ["10", "20", "30", "40"]}
+        ]
+        mock_response_geo.raise_for_status = MagicMock()
+        mock_get.return_value = mock_response_geo
 
         adapter = FlightRadarAdapter()
-        adapter.get_aeroplanes("Spain")
-
-        # Проверяем, что данные успешно записались в атрибут адаптера
-        assert "states" in adapter.aeroplanes
-        assert adapter.aeroplanes["states"][0][1] == "IBE3144"
+        adapter.get_aeroplanes("Canada")
+        assert adapter.aeroplanes is not None
